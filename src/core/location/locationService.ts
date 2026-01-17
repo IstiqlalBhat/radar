@@ -12,18 +12,12 @@ class LocationService {
     private lastLocation: LocationType | null = null;
 
     /**
-     * Request location permissions
+     * Request location permissions (foreground only for Expo Go compatibility)
      */
     async requestPermissions(): Promise<boolean> {
         try {
             const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
-            if (foregroundStatus !== 'granted') {
-                return false;
-            }
-
-            // Request background permissions for geofencing
-            const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-            return backgroundStatus === 'granted';
+            return foregroundStatus === 'granted';
         } catch (error) {
             console.error('Error requesting location permissions:', error);
             return false;

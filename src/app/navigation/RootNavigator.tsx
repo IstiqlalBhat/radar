@@ -2,83 +2,143 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image, Platform, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList, MainTabParamList } from '@shared/types/navigation.types';
-import { COLORS } from '@shared/constants/theme';
+import {
+    COLORS,
+    SHADOWS,
+    SPACING,
+    BORDER_RADIUS,
+    FONT_SIZES,
+    FONT_WEIGHTS,
+} from '@shared/constants/theme';
+import { ExploreScreen } from '@modules/explore';
+import { FeedScreen } from '@modules/feed/screens/FeedScreen';
+import { NotificationsScreen } from '@modules/notifications/screens/NotificationsScreen';
+import { ProfileScreen } from '@modules/profile/screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// Placeholder screens (to be replaced with actual screens)
-const PlaceholderScreen: React.FC<{ name: string }> = ({ name }) => (
+// Icons
+const ICONS = {
+    explore: require('@assets/images/explore.png'),
+    feed: require('@assets/images/feed.png'),
+    alert: require('@assets/images/alert.png'),
+    profile: require('@assets/images/profile.png'),
+};
+
+// Placeholder screens for modals
+const PlaceholderScreen: React.FC<{ name: string; icon: any }> = ({ name, icon }) => (
     <View style={styles.placeholder}>
+        <View style={styles.placeholderIconContainer}>
+            <Image source={icon} style={styles.placeholderIcon} resizeMode="contain" />
+        </View>
         <Text style={styles.placeholderText}>{name}</Text>
         <Text style={styles.placeholderSubtext}>Coming soon</Text>
     </View>
 );
 
-// Temporary screen components
-const MapScreen = () => <PlaceholderScreen name="📍 Map" />;
-const FeedScreen = () => <PlaceholderScreen name="📰 Feed" />;
-const NotificationsScreen = () => <PlaceholderScreen name="🔔 Notifications" />;
-const ProfileScreen = () => <PlaceholderScreen name="👤 Profile" />;
-const OnboardingScreen = () => <PlaceholderScreen name="🚀 Onboarding" />;
-const BubbleDetailScreen = () => <PlaceholderScreen name="🫧 Bubble Detail" />;
-const CreatePostScreen = () => <PlaceholderScreen name="✏️ Create Post" />;
-const SettingsScreen = () => <PlaceholderScreen name="⚙️ Settings" />;
+const OnboardingScreen = () => <PlaceholderScreen name="RADAR" icon={ICONS.explore} />;
+const BubbleDetailScreen = () => <PlaceholderScreen name="Bubble Detail" icon={ICONS.explore} />;
+const CreatePostScreen = () => <PlaceholderScreen name="Create Post" icon={ICONS.feed} />;
+const SettingsScreen = () => <PlaceholderScreen name="Settings" icon={ICONS.profile} />;
+
+// Custom Tab Bar Icon - Minimalist
+interface TabIconProps {
+    focused: boolean;
+    icon: any;
+    label: string;
+}
+
+const TabIcon: React.FC<TabIconProps> = ({ focused, icon, label }) => {
+    return (
+        <View style={[styles.tabIconWrapper, focused && styles.tabIconWrapperFocused]}>
+            <Image
+                source={icon}
+                style={[
+                    styles.tabIcon,
+                    { tintColor: focused ? COLORS.primary : COLORS.textMuted },
+                ]}
+                resizeMode="contain"
+            />
+            {focused && <View style={styles.activeDot} />}
+        </View>
+    );
+};
+
+// Custom Tab Bar Component - Minimalist & Docked
+const CustomTabBar: React.FC<any> = ({ state, descriptors, navigation }) => {
+    const insets = useSafeAreaInsets();
+
+    return (
+        <View style={[styles.tabBarContainer, { paddingBottom: insets.bottom }]}>
+            <View style={styles.tabBarContent}>
+                {state.routes.map((route: any, index: number) => {
+                    const { options } = descriptors[route.key];
+                    const isFocused = state.index === index;
+
+                    const onPress = () => {
+                        const event = navigation.emit({
+                            type: 'tabPress',
+                            target: route.key,
+                            canPreventDefault: true,
+                        });
+
+                        if (!isFocused && !event.defaultPrevented) {
+                            navigation.navigate(route.name);
+                        }
+                    };
+
+                    const getIcon = () => {
+                        switch (route.name) {
+                            case 'Map':
+                                return ICONS.explore;
+                            case 'Feed':
+                                return ICONS.feed;
+                            case 'Notifications':
+                                return ICONS.alert;
+                            case 'Profile':
+                                return ICONS.profile;
+                            default:
+                                return ICONS.explore;
+                        }
+                    };
+
+                    return (
+                        <Pressable
+                            key={route.key}
+                            style={styles.tabItem}
+                            onPress={onPress}
+                        >
+                            <TabIcon
+                                focused={isFocused}
+                                icon={getIcon()}
+                                label={route.name}
+                            />
+                        </Pressable>
+                    );
+                })}
+            </View>
+        </View>
+    );
+};
 
 // Main Tab Navigator
 function MainTabNavigator() {
     return (
         <Tab.Navigator
+            tabBar={(props) => <CustomTabBar {...props} />}
             screenOptions={{
                 headerShown: false,
-                tabBarStyle: styles.tabBar,
-                tabBarActiveTintColor: COLORS.primary,
-                tabBarInactiveTintColor: COLORS.textMuted,
             }}
         >
-            <Tab.Screen
-                name="Map"
-                component={MapScreen}
-                options={{
-                    tabBarLabel: 'Explore',
-                    tabBarIcon: ({ color }) => (
-                        <Text style={{ color, fontSize: 20 }}>📍</Text>
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="Feed"
-                component={FeedScreen}
-                options={{
-                    tabBarLabel: 'Feed',
-                    tabBarIcon: ({ color }) => (
-                        <Text style={{ color, fontSize: 20 }}>📰</Text>
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="Notifications"
-                component={NotificationsScreen}
-                options={{
-                    tabBarLabel: 'Alerts',
-                    tabBarIcon: ({ color }) => (
-                        <Text style={{ color, fontSize: 20 }}>🔔</Text>
-                    ),
-                }}
-            />
-            <Tab.Screen
-                name="Profile"
-                component={ProfileScreen}
-                options={{
-                    tabBarLabel: 'Profile',
-                    tabBarIcon: ({ color }) => (
-                        <Text style={{ color, fontSize: 20 }}>👤</Text>
-                    ),
-                }}
-            />
+            <Tab.Screen name="Map" component={ExploreScreen} />
+            <Tab.Screen name="Feed" component={FeedScreen} />
+            <Tab.Screen name="Notifications" component={NotificationsScreen} />
+            <Tab.Screen name="Profile" component={ProfileScreen} />
         </Tab.Navigator>
     );
 }
@@ -93,6 +153,7 @@ export function RootNavigator() {
                 screenOptions={{
                     headerShown: false,
                     contentStyle: { backgroundColor: COLORS.background },
+                    animation: 'fade',
                 }}
             >
                 {!isAuthenticated ? (
@@ -105,6 +166,7 @@ export function RootNavigator() {
                             component={BubbleDetailScreen}
                             options={{
                                 presentation: 'modal',
+                                animation: 'slide_from_bottom',
                             }}
                         />
                         <Stack.Screen
@@ -112,6 +174,7 @@ export function RootNavigator() {
                             component={CreatePostScreen}
                             options={{
                                 presentation: 'modal',
+                                animation: 'slide_from_bottom',
                             }}
                         />
                         <Stack.Screen name="Settings" component={SettingsScreen} />
@@ -129,23 +192,70 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: COLORS.background,
     },
+    placeholderIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: BORDER_RADIUS.xl,
+        backgroundColor: COLORS.surfaceLight,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: SPACING.lg,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    placeholderIcon: {
+        width: 40,
+        height: 40,
+        tintColor: COLORS.primary,
+    },
     placeholderText: {
-        fontSize: 32,
+        fontSize: FONT_SIZES.xxl,
         color: COLORS.textPrimary,
-        fontWeight: 'bold',
+        fontWeight: FONT_WEIGHTS.bold,
+        marginBottom: SPACING.sm,
     },
     placeholderSubtext: {
-        fontSize: 16,
-        color: COLORS.textMuted,
-        marginTop: 8,
+        fontSize: FONT_SIZES.md,
+        color: COLORS.textSecondary,
     },
-    tabBar: {
+
+    // Tab Bar Styles
+    tabBarContainer: {
         backgroundColor: COLORS.surface,
-        borderTopColor: COLORS.surfaceLight,
         borderTopWidth: 1,
-        paddingBottom: 4,
-        paddingTop: 4,
+        borderTopColor: COLORS.border,
+    },
+    tabBarContent: {
+        flexDirection: 'row',
         height: 60,
+        alignItems: 'center',
+    },
+    tabItem: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+    },
+    tabIconWrapper: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 40,
+        height: 40,
+    },
+    tabIconWrapperFocused: {
+        // Optional active state styling
+    },
+    tabIcon: {
+        width: 24,
+        height: 24,
+    },
+    activeDot: {
+        position: 'absolute',
+        bottom: -8,
+        width: 4,
+        height: 4,
+        borderRadius: BORDER_RADIUS.full,
+        backgroundColor: COLORS.primary,
     },
 });
 
