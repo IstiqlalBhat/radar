@@ -15,6 +15,8 @@ import {
 import { MapView, PROVIDER_GOOGLE } from '@shared/components/MapView';
 import type { Region } from '@shared/components/MapView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import {
     COLORS,
@@ -24,7 +26,6 @@ import {
     BORDER_RADIUS,
     SHADOWS,
 } from '@shared/constants/theme';
-import { IconButton, GlowingBadge } from '@shared/components'; // Assuming these can be reused or will be refactored later, if not I will simplify here.
 import { locationService } from '@core/location/locationService';
 import { useBubbleStore } from '@modules/bubble/store/bubbleStore';
 import type { Bubble } from '@modules/bubble/types/bubble.types';
@@ -48,7 +49,7 @@ const CLEMSON_COORDS = {
     longitude: -82.8374,
 };
 
-// Mock data (Same as before)
+// Mock data
 const MOCK_BUBBLES: Bubble[] = [
     {
         id: '1',
@@ -107,21 +108,21 @@ const DEFAULT_REGION: Region = {
     longitudeDelta: 0.015,
 };
 
-// Midnight Minimal Map Style
-const minimalMapStyle = [
-    { elementType: 'geometry', stylers: [{ color: '#18181B' }] }, // Zinc 900
-    { elementType: 'labels.text.fill', stylers: [{ color: '#71717A' }] }, // Zinc 500
-    { elementType: 'labels.text.stroke', stylers: [{ color: '#18181B' }] },
-    { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#A1A1AA' }] },
-    { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#71717A' }] },
-    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#27272A' }] }, // Zinc 800
-    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#3F3F46' }] }, // Zinc 700
-    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#212121' }] },
-    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#9CA3AF' }] },
-    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#52525B' }] }, // Zinc 600
-    { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1F2937' }] },
-    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#000000' }] }, // Pure Black
-    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3B82F6' }] },
+// Neon Noir Map Style
+const neonNoirMapStyle = [
+    { elementType: 'geometry', stylers: [{ color: '#0A0A0F' }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: '#5C5C6E' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#0A0A0F' }] },
+    { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#8B8BA3' }] },
+    { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#5C5C6E' }] },
+    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#12121A' }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1A1A28' }] },
+    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#12121A' }] },
+    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8B8BA3' }] },
+    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#252538' }] },
+    { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#12121A' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#00D9FF', lightness: -80 }] },
+    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#00D9FF' }] },
 ];
 
 export const ExploreScreen: React.FC = () => {
@@ -180,7 +181,6 @@ export const ExploreScreen: React.FC = () => {
             latitudeDelta: 0.006,
             longitudeDelta: 0.006,
         }, 400);
-        // Collapse feed when selecting a bubble to show map
         if (isFeedExpanded) toggleFeed();
     }, [isFeedExpanded]);
 
@@ -198,7 +198,9 @@ export const ExploreScreen: React.FC = () => {
     if (isLoading) {
         return (
             <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
+                <View style={styles.loadingGlow}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
                 <Text style={styles.loadingText}>Loading Radar...</Text>
             </View>
         );
@@ -215,8 +217,8 @@ export const ExploreScreen: React.FC = () => {
                 showsUserLocation
                 showsMyLocationButton={false}
                 showsCompass={false}
-                customMapStyle={minimalMapStyle}
-                mapPadding={{ top: 0, right: 0, bottom: isFeedExpanded ? SCREEN_HEIGHT * 0.6 : 100, left: 0 }}
+                customMapStyle={neonNoirMapStyle}
+                mapPadding={{ top: 0, right: 0, bottom: isFeedExpanded ? SCREEN_HEIGHT * 0.55 : 90, left: 0 }}
             >
                 {displayBubbles.map((bubble) => (
                     <BubbleMarker
@@ -227,83 +229,90 @@ export const ExploreScreen: React.FC = () => {
                 ))}
             </MapView>
 
-            {/* Minimal Header */}
-            <View style={[styles.headerContainer, { paddingTop: insets.top + SPACING.xs }]}>
-                <View style={styles.headerContent}>
-                    <View style={styles.headerDetails}>
-                        <Text style={styles.headerTitle}>RADAR</Text>
-                        <View style={styles.headerDot} />
-                        <Text style={styles.headerSubtitle}>
-                            {displayBubbles.length} ACTIVE
-                        </Text>
-                    </View>
+            {/* Floating Header */}
+            <View style={[styles.headerContainer, { paddingTop: insets.top + SPACING.sm }]}>
+                <View style={styles.headerPill}>
+                    <View style={styles.headerDot} />
+                    <Text style={styles.headerTitle}>RADAR</Text>
+                    <View style={styles.headerDivider} />
+                    <Text style={styles.headerCount}>{displayBubbles.length} ACTIVE</Text>
                 </View>
             </View>
 
             {/* Center Button */}
             <Pressable
-                style={[styles.centerButton, { bottom: isFeedExpanded ? SCREEN_HEIGHT * 0.6 + 20 : 100 }]}
+                style={({ pressed }) => [
+                    styles.centerButton,
+                    { bottom: isFeedExpanded ? SCREEN_HEIGHT * 0.55 + 20 : 110 },
+                    pressed && { transform: [{ scale: 0.9 }] }
+                ]}
                 onPress={centerOnUser}
             >
-                <Text style={styles.centerButtonIcon}>⌖</Text>
+                <LinearGradient
+                    colors={[COLORS.surfaceLight, COLORS.surface]}
+                    style={styles.centerButtonGradient}
+                >
+                    <Text style={styles.centerButtonIcon}>⌖</Text>
+                </LinearGradient>
             </Pressable>
 
             {/* Collapsible Trending Sheet */}
             <View style={[
                 styles.feedSheet,
                 {
-                    height: isFeedExpanded ? '60%' : 90,
-                    paddingBottom: insets.bottom + 65 // Space for tab bar
+                    height: isFeedExpanded ? '55%' : 90,
+                    paddingBottom: insets.bottom + 70
                 }
             ]}>
-                <Pressable onPress={toggleFeed} style={styles.sheetHeader}>
-                    <View style={styles.sheetHandle} />
-                    <Text style={styles.sheetTitle}>
-                        {isFeedExpanded ? 'TRENDING NEARBY' : 'SWIPE UP FOR TRENDING'}
-                    </Text>
-                </Pressable>
-
-                {isFeedExpanded ? (
-                    <ScrollView
-                        style={styles.feedScroll}
-                        contentContainerStyle={styles.feedContent}
-                        showsVerticalScrollIndicator={false}
-                        refreshControl={
-                            <RefreshControl
-                                refreshing={refreshing}
-                                onRefresh={onRefresh}
-                                tintColor={COLORS.primary}
-                                colors={[COLORS.primary]}
-                            />
-                        }
-                    >
-                        {displayBubbles.map((bubble, index) => (
-                            <DiscoveryCard
-                                key={bubble.id}
-                                bubble={bubble}
-                                onPress={() => handleBubblePress(bubble)}
-                                rank={index + 1}
-                                distance={
-                                    userLocation
-                                        ? calculateDistance(
-                                            userLocation.latitude,
-                                            userLocation.longitude,
-                                            bubble.location.latitude,
-                                            bubble.location.longitude
-                                        )
-                                        : undefined
-                                }
-                            />
-                        ))}
-                    </ScrollView>
-                ) : (
-                    // Minimized View Preview
-                    <View style={styles.minimizedPreview}>
-                        <Text style={styles.minimizedText}>
-                            {displayBubbles[0]?.name} is hot right now 🔥
+                <BlurView intensity={80} tint="dark" style={styles.sheetBlur}>
+                    <Pressable onPress={toggleFeed} style={styles.sheetHeader}>
+                        <View style={styles.sheetHandle} />
+                        <Text style={styles.sheetTitle}>
+                            {isFeedExpanded ? 'TRENDING NEARBY' : 'SWIPE UP FOR TRENDING'}
                         </Text>
-                    </View>
-                )}
+                    </Pressable>
+
+                    {isFeedExpanded ? (
+                        <ScrollView
+                            style={styles.feedScroll}
+                            contentContainerStyle={styles.feedContent}
+                            showsVerticalScrollIndicator={false}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={onRefresh}
+                                    tintColor={COLORS.primary}
+                                    colors={[COLORS.primary]}
+                                />
+                            }
+                        >
+                            {displayBubbles.map((bubble, index) => (
+                                <DiscoveryCard
+                                    key={bubble.id}
+                                    bubble={bubble}
+                                    onPress={() => handleBubblePress(bubble)}
+                                    rank={index + 1}
+                                    distance={
+                                        userLocation
+                                            ? calculateDistance(
+                                                userLocation.latitude,
+                                                userLocation.longitude,
+                                                bubble.location.latitude,
+                                                bubble.location.longitude
+                                            )
+                                            : undefined
+                                    }
+                                />
+                            ))}
+                        </ScrollView>
+                    ) : (
+                        <View style={styles.minimizedPreview}>
+                            <Text style={styles.minimizedText}>
+                                {displayBubbles[0]?.name} is hot right now 🔥
+                            </Text>
+                        </View>
+                    )}
+                </BlurView>
             </View>
         </View>
     );
@@ -320,14 +329,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: COLORS.background,
     },
+    loadingGlow: {
+        ...SHADOWS.glow,
+    },
     loadingText: {
         marginTop: SPACING.md,
         fontSize: FONT_SIZES.md,
         color: COLORS.textSecondary,
+        letterSpacing: 1,
     },
     map: {
         ...StyleSheet.absoluteFillObject,
     },
+
+    // Header
     headerContainer: {
         position: 'absolute',
         top: 0,
@@ -335,98 +350,100 @@ const styles = StyleSheet.create({
         right: 0,
         paddingHorizontal: SPACING.md,
     },
-    headerContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    headerDetails: {
+    headerPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.surface,
+        alignSelf: 'flex-start',
+        backgroundColor: COLORS.glass,
         paddingHorizontal: SPACING.md,
-        paddingVertical: 8,
-        borderRadius: BORDER_RADIUS.sm,
+        paddingVertical: 10,
+        borderRadius: BORDER_RADIUS.full,
         borderWidth: 1,
         borderColor: COLORS.border,
-        // Hard shadow
-        shadowColor: '#000',
-        shadowOffset: { width: 3, height: 3 },
-        shadowOpacity: 1,
-        shadowRadius: 0,
-        elevation: 4,
+        ...SHADOWS.glow,
+    },
+    headerDot: {
+        width: 8,
+        height: 8,
+        backgroundColor: COLORS.success,
+        borderRadius: BORDER_RADIUS.full,
+        marginRight: SPACING.sm,
+        ...SHADOWS.glowSuccess,
     },
     headerTitle: {
-        fontSize: FONT_SIZES.lg,
-        fontWeight: FONT_WEIGHTS.black,
+        fontSize: FONT_SIZES.md,
+        fontWeight: FONT_WEIGHTS.bold,
         color: COLORS.textPrimary,
         letterSpacing: 1,
     },
-    headerDot: {
-        width: 4,
-        height: 4,
-        backgroundColor: COLORS.success,
-        borderRadius: 2,
+    headerDivider: {
+        width: 1,
+        height: 16,
+        backgroundColor: COLORS.border,
         marginHorizontal: SPACING.sm,
     },
-    headerSubtitle: {
+    headerCount: {
         fontSize: FONT_SIZES.sm,
-        fontWeight: FONT_WEIGHTS.bold,
+        fontWeight: FONT_WEIGHTS.medium,
         color: COLORS.textSecondary,
     },
+
+    // Center Button
     centerButton: {
         position: 'absolute',
         right: SPACING.md,
-        width: 44,
-        height: 44,
-        backgroundColor: COLORS.surface,
-        borderRadius: BORDER_RADIUS.sm,
+        borderRadius: BORDER_RADIUS.full,
+        overflow: 'hidden',
+        ...SHADOWS.glow,
+    },
+    centerButtonGradient: {
+        width: 48,
+        height: 48,
         justifyContent: 'center',
         alignItems: 'center',
+        borderRadius: BORDER_RADIUS.full,
         borderWidth: 1,
         borderColor: COLORS.border,
-        shadowColor: '#000',
-        shadowOffset: { width: 3, height: 3 },
-        shadowOpacity: 1,
-        shadowRadius: 0,
-        elevation: 4,
     },
     centerButtonIcon: {
-        fontSize: 24,
-        color: COLORS.textPrimary,
+        fontSize: 22,
+        color: COLORS.primary,
     },
+
+    // Feed Sheet
     feedSheet: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: COLORS.surface,
+        borderTopLeftRadius: BORDER_RADIUS.xl,
+        borderTopRightRadius: BORDER_RADIUS.xl,
+        overflow: 'hidden',
+    },
+    sheetBlur: {
+        flex: 1,
+        backgroundColor: COLORS.glass,
         borderTopWidth: 1,
         borderTopColor: COLORS.borderHighlight,
-        elevation: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
     },
     sheetHeader: {
-        height: 40,
+        height: 44,
         alignItems: 'center',
         justifyContent: 'center',
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
     },
     sheetHandle: {
-        width: 40,
+        width: 36,
         height: 4,
         backgroundColor: COLORS.borderHighlight,
-        borderRadius: 2,
-        marginBottom: 4,
+        borderRadius: BORDER_RADIUS.full,
+        marginBottom: 6,
     },
     sheetTitle: {
         fontSize: FONT_SIZES.xs,
-        fontWeight: FONT_WEIGHTS.bold,
-        color: COLORS.textSecondary,
+        fontWeight: FONT_WEIGHTS.semibold,
+        color: COLORS.textMuted,
         letterSpacing: 1,
     },
     feedScroll: {
@@ -434,16 +451,17 @@ const styles = StyleSheet.create({
     },
     feedContent: {
         paddingTop: SPACING.md,
+        paddingBottom: SPACING.xl,
     },
     minimizedPreview: {
-        height: 50,
+        height: 46,
         justifyContent: 'center',
         alignItems: 'center',
     },
     minimizedText: {
         fontSize: FONT_SIZES.sm,
         color: COLORS.primary,
-        fontWeight: FONT_WEIGHTS.bold,
+        fontWeight: FONT_WEIGHTS.semibold,
     },
 });
 

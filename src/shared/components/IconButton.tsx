@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     Pressable,
     StyleSheet,
@@ -9,9 +9,10 @@ import {
 import {
     COLORS,
     BORDER_RADIUS,
+    SHADOWS,
 } from '../constants/theme';
 
-type IconButtonVariant = 'glass' | 'brutal' | 'ghost' | 'glow';
+type IconButtonVariant = 'solid' | 'ghost' | 'glow';
 type IconButtonSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface IconButtonProps {
@@ -19,7 +20,7 @@ interface IconButtonProps {
     onPress: () => void;
     variant?: IconButtonVariant;
     size?: IconButtonSize;
-    glowColor?: 'cyan' | 'pink' | 'yellow' | 'purple'; // Keeping prop for API compatibility but mapping to new theme
+    glowColor?: string;
     disabled?: boolean;
     style?: StyleProp<ViewStyle>;
 }
@@ -27,84 +28,61 @@ interface IconButtonProps {
 export const IconButton: React.FC<IconButtonProps> = ({
     icon,
     onPress,
-    variant = 'glsass', // Fallback will be handled
+    variant = 'solid',
     size = 'md',
-    glowColor = 'cyan',
+    glowColor = COLORS.primary,
     disabled = false,
     style,
 }) => {
-    const [isPressed, setIsPressed] = useState(false);
-
     const getSize = (): number => {
         switch (size) {
             case 'sm': return 36;
-            case 'lg': return 56;
-            case 'xl': return 72;
+            case 'lg': return 52;
+            case 'xl': return 64;
             default: return 44;
         }
     };
 
     const sizeValue = getSize();
 
-    // Map legacy variants to new style
-    // 'glass' -> 'outline' or 'solid' (minimal)
-    // 'brutal' -> 'brutal' (solid with hard shadow)
+    const getGlowStyle = () => {
+        if (variant !== 'glow') return {};
+        return {
+            ...SHADOWS.glow,
+            shadowColor: glowColor,
+        };
+    };
 
     return (
-        <View style={[styles.wrapper, style]}>
-            {/* Hard Shadow for 'brutal' or legacy 'glass' which we make 'solid' */}
-            <View
-                style={[
-                    styles.shadow,
-                    {
-                        width: sizeValue,
-                        height: sizeValue,
-                        borderRadius: BORDER_RADIUS.sm,
-                        opacity: isPressed ? 0.5 : 1,
-                        backgroundColor: COLORS.borderHighlight || '#000',
-                    },
-                ]}
-            />
-
-            <Pressable
-                onPress={onPress}
-                disabled={disabled}
-                onPressIn={() => setIsPressed(true)}
-                onPressOut={() => setIsPressed(false)}
-                style={[
-                    styles.button,
-                    {
-                        width: sizeValue,
-                        height: sizeValue,
-                        borderRadius: BORDER_RADIUS.sm,
-                        backgroundColor: variant === 'ghost' ? 'transparent' : COLORS.surface,
-                        borderWidth: variant === 'ghost' ? 0 : 1,
-                        borderColor: COLORS.border,
-                        transform: isPressed ? [{ translateX: 2 }, { translateY: 2 }] : [],
-                    },
-                ]}
-            >
-                <View style={styles.iconContainer}>{icon}</View>
-            </Pressable>
-        </View>
+        <Pressable
+            onPress={onPress}
+            disabled={disabled}
+            style={({ pressed }) => [
+                styles.button,
+                {
+                    width: sizeValue,
+                    height: sizeValue,
+                    backgroundColor: variant === 'ghost' ? 'transparent' : COLORS.surfaceLight,
+                    borderWidth: variant === 'ghost' ? 0 : 1,
+                    borderColor: variant === 'glow' ? glowColor + '40' : COLORS.border,
+                    opacity: disabled ? 0.5 : 1,
+                    transform: pressed ? [{ scale: 0.92 }] : [],
+                },
+                getGlowStyle(),
+                style,
+            ]}
+        >
+            <View style={styles.iconContainer}>{icon}</View>
+        </Pressable>
     );
 };
 
 const styles = StyleSheet.create({
-    wrapper: {
-        position: 'relative',
-    },
-    shadow: {
-        position: 'absolute',
-        top: 3,
-        left: 3,
-        zIndex: 0,
-    },
     button: {
         alignItems: 'center',
         justifyContent: 'center',
+        borderRadius: BORDER_RADIUS.full,
         overflow: 'hidden',
-        zIndex: 1,
     },
     iconContainer: {
         alignItems: 'center',

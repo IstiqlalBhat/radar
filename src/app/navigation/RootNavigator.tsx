@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet, Image, Platform, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList, MainTabParamList } from '@shared/types/navigation.types';
@@ -46,81 +46,77 @@ const BubbleDetailScreen = () => <PlaceholderScreen name="Bubble Detail" icon={I
 const CreatePostScreen = () => <PlaceholderScreen name="Create Post" icon={ICONS.feed} />;
 const SettingsScreen = () => <PlaceholderScreen name="Settings" icon={ICONS.profile} />;
 
-// Custom Tab Bar Icon - Minimalist
+// Custom Tab Bar Icon
 interface TabIconProps {
     focused: boolean;
     icon: any;
-    label: string;
 }
 
-const TabIcon: React.FC<TabIconProps> = ({ focused, icon, label }) => {
+const TabIcon: React.FC<TabIconProps> = ({ focused, icon }) => {
     return (
-        <View style={[styles.tabIconWrapper, focused && styles.tabIconWrapperFocused]}>
-            <Image
-                source={icon}
-                style={[
-                    styles.tabIcon,
-                    { tintColor: focused ? COLORS.primary : COLORS.textMuted },
-                ]}
-                resizeMode="contain"
-            />
-            {focused && <View style={styles.activeDot} />}
+        <View style={styles.tabIconWrapper}>
+            <View style={[
+                styles.tabIconInner,
+                focused && styles.tabIconInnerFocused
+            ]}>
+                <Image
+                    source={icon}
+                    style={[
+                        styles.tabIcon,
+                        { tintColor: focused ? COLORS.primary : COLORS.textMuted },
+                    ]}
+                    resizeMode="contain"
+                />
+            </View>
+            {focused && <View style={styles.activeIndicator} />}
         </View>
     );
 };
 
-// Custom Tab Bar Component - Minimalist & Docked
+// Custom Floating Tab Bar - Fixed visibility
 const CustomTabBar: React.FC<any> = ({ state, descriptors, navigation }) => {
     const insets = useSafeAreaInsets();
 
     return (
-        <View style={[styles.tabBarContainer, { paddingBottom: insets.bottom }]}>
-            <View style={styles.tabBarContent}>
-                {state.routes.map((route: any, index: number) => {
-                    const { options } = descriptors[route.key];
-                    const isFocused = state.index === index;
+        <View style={[styles.tabBarOuter, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+            <View style={styles.tabBarContainer}>
+                <View style={styles.tabBarContent}>
+                    {state.routes.map((route: any, index: number) => {
+                        const isFocused = state.index === index;
 
-                    const onPress = () => {
-                        const event = navigation.emit({
-                            type: 'tabPress',
-                            target: route.key,
-                            canPreventDefault: true,
-                        });
+                        const onPress = () => {
+                            const event = navigation.emit({
+                                type: 'tabPress',
+                                target: route.key,
+                                canPreventDefault: true,
+                            });
 
-                        if (!isFocused && !event.defaultPrevented) {
-                            navigation.navigate(route.name);
-                        }
-                    };
+                            if (!isFocused && !event.defaultPrevented) {
+                                navigation.navigate(route.name);
+                            }
+                        };
 
-                    const getIcon = () => {
-                        switch (route.name) {
-                            case 'Map':
-                                return ICONS.explore;
-                            case 'Feed':
-                                return ICONS.feed;
-                            case 'Notifications':
-                                return ICONS.alert;
-                            case 'Profile':
-                                return ICONS.profile;
-                            default:
-                                return ICONS.explore;
-                        }
-                    };
+                        const getIcon = () => {
+                            switch (route.name) {
+                                case 'Map': return ICONS.explore;
+                                case 'Feed': return ICONS.feed;
+                                case 'Notifications': return ICONS.alert;
+                                case 'Profile': return ICONS.profile;
+                                default: return ICONS.explore;
+                            }
+                        };
 
-                    return (
-                        <Pressable
-                            key={route.key}
-                            style={styles.tabItem}
-                            onPress={onPress}
-                        >
-                            <TabIcon
-                                focused={isFocused}
-                                icon={getIcon()}
-                                label={route.name}
-                            />
-                        </Pressable>
-                    );
-                })}
+                        return (
+                            <Pressable
+                                key={route.key}
+                                style={styles.tabItem}
+                                onPress={onPress}
+                            >
+                                <TabIcon focused={isFocused} icon={getIcon()} />
+                            </Pressable>
+                        );
+                    })}
+                </View>
             </View>
         </View>
     );
@@ -145,7 +141,7 @@ function MainTabNavigator() {
 
 // Root Navigator
 export function RootNavigator() {
-    const isAuthenticated = true; // TODO: Get from auth store
+    const isAuthenticated = true;
 
     return (
         <NavigationContainer>
@@ -193,9 +189,9 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.background,
     },
     placeholderIconContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: BORDER_RADIUS.xl,
+        width: 100,
+        height: 100,
+        borderRadius: BORDER_RADIUS.xxl,
         backgroundColor: COLORS.surfaceLight,
         justifyContent: 'center',
         alignItems: 'center',
@@ -204,8 +200,8 @@ const styles = StyleSheet.create({
         borderColor: COLORS.border,
     },
     placeholderIcon: {
-        width: 40,
-        height: 40,
+        width: 48,
+        height: 48,
         tintColor: COLORS.primary,
     },
     placeholderText: {
@@ -213,22 +209,36 @@ const styles = StyleSheet.create({
         color: COLORS.textPrimary,
         fontWeight: FONT_WEIGHTS.bold,
         marginBottom: SPACING.sm,
+        letterSpacing: 2,
     },
     placeholderSubtext: {
         fontSize: FONT_SIZES.md,
         color: COLORS.textSecondary,
     },
 
-    // Tab Bar Styles
+    // Floating Tab Bar Styles
+    tabBarOuter: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        paddingHorizontal: SPACING.lg,
+    },
     tabBarContainer: {
+        width: '100%',
+        maxWidth: 320,
+        borderRadius: BORDER_RADIUS.xxl,
         backgroundColor: COLORS.surface,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.border,
+        borderWidth: 1,
+        borderColor: COLORS.borderHighlight,
+        ...SHADOWS.md,
     },
     tabBarContent: {
         flexDirection: 'row',
-        height: 60,
+        height: 64,
         alignItems: 'center',
+        paddingHorizontal: SPACING.sm,
     },
     tabItem: {
         flex: 1,
@@ -239,21 +249,29 @@ const styles = StyleSheet.create({
     tabIconWrapper: {
         alignItems: 'center',
         justifyContent: 'center',
-        width: 40,
-        height: 40,
+        width: 52,
+        height: 52,
     },
-    tabIconWrapperFocused: {
-        // Optional active state styling
+    tabIconInner: {
+        width: 44,
+        height: 44,
+        borderRadius: BORDER_RADIUS.md,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
+    },
+    tabIconInnerFocused: {
+        backgroundColor: COLORS.primaryGlow,
     },
     tabIcon: {
         width: 24,
         height: 24,
     },
-    activeDot: {
+    activeIndicator: {
         position: 'absolute',
-        bottom: -8,
-        width: 4,
-        height: 4,
+        bottom: 2,
+        width: 20,
+        height: 3,
         borderRadius: BORDER_RADIUS.full,
         backgroundColor: COLORS.primary,
     },

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '@shared/constants/theme';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@shared/constants/theme';
 import type { Bubble, BubbleType } from '@modules/bubble/types/bubble.types';
 
 interface DiscoveryCardProps {
@@ -42,140 +42,118 @@ const formatDistance = (meters?: number): string => {
 };
 
 export const DiscoveryCard: React.FC<DiscoveryCardProps> = ({ bubble, onPress, distance, rank }) => {
-    const [isPressed, setIsPressed] = useState(false);
     const activityColor = getActivityColor(bubble.hotScore);
 
     return (
-        <View style={styles.wrapper}>
-            <Pressable
-                style={({ pressed }) => [
-                    styles.card,
-                    { transform: pressed ? [{ translateX: 2 }, { translateY: 2 }] : [] },
-                ]}
-                onPress={() => onPress(bubble)}
-            >
-                {/* Accent Stripe */}
-                <View style={[styles.accentStripe, { backgroundColor: activityColor }]} />
+        <Pressable
+            style={({ pressed }) => [
+                styles.card,
+                pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 }
+            ]}
+            onPress={() => onPress(bubble)}
+        >
+            {/* Glowing accent border */}
+            <View style={[styles.glowBorder, { backgroundColor: activityColor }]} />
 
-                <View style={styles.cardContent}>
-                    {rank && rank <= 3 && (
-                        <View style={[styles.rankBadge, { borderColor: COLORS.border }]}>
-                            <Text style={styles.rankText}>#{rank}</Text>
+            {/* Rank badge */}
+            {rank && rank <= 3 && (
+                <View style={[styles.rankBadge, { backgroundColor: activityColor + '20', borderColor: activityColor }]}>
+                    <Text style={[styles.rankText, { color: activityColor }]}>#{rank}</Text>
+                </View>
+            )}
+
+            <View style={styles.cardContent}>
+                <View style={[styles.iconContainer, { backgroundColor: activityColor + '15' }]}>
+                    <Text style={styles.icon}>{BUBBLE_TYPE_ICONS[bubble.type]}</Text>
+                </View>
+
+                <View style={styles.content}>
+                    <View style={styles.header}>
+                        <Text style={styles.name} numberOfLines={1}>{bubble.name}</Text>
+                        <View style={styles.activityBadge}>
+                            <Text style={[styles.activityText, { color: activityColor }]}>
+                                {getActivityLabel(bubble.activeUsers)}
+                            </Text>
                         </View>
-                    )}
-
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.icon}>{BUBBLE_TYPE_ICONS[bubble.type]}</Text>
                     </View>
 
-                    <View style={styles.content}>
-                        <View style={styles.header}>
-                            <Text style={styles.name} numberOfLines={1}>{bubble.name}</Text>
-                            <View style={[styles.activityBadge]}>
-                                <Text style={[styles.activityText, { color: activityColor }]}>
-                                    {getActivityLabel(bubble.activeUsers)}
+                    <Text style={styles.type}>{BUBBLE_TYPE_LABELS[bubble.type]}</Text>
+
+                    <View style={styles.stats}>
+                        <Text style={styles.statValue}>{bubble.activeUsers}</Text>
+                        <Text style={styles.statLabel}> online</Text>
+
+                        <View style={styles.statDivider} />
+
+                        <Text style={styles.statValue}>{bubble.postCount}</Text>
+                        <Text style={styles.statLabel}> posts</Text>
+
+                        {distance && (
+                            <>
+                                <View style={styles.statDivider} />
+                                <Text style={[styles.statValue, { color: COLORS.primary }]}>
+                                    {formatDistance(distance)}
                                 </Text>
-                            </View>
-                        </View>
-
-                        <Text style={styles.type}>{BUBBLE_TYPE_LABELS[bubble.type]}</Text>
-
-                        <View style={styles.stats}>
-                            <Text style={styles.statValue}>{bubble.activeUsers}</Text>
-                            <Text style={styles.statLabel}> online</Text>
-
-                            <View style={styles.statDivider} />
-
-                            <Text style={styles.statValue}>{bubble.postCount}</Text>
-                            <Text style={styles.statLabel}> posts</Text>
-
-                            {distance && (
-                                <>
-                                    <View style={styles.statDivider} />
-                                    <Text style={[styles.statValue, { color: COLORS.primary }]}>
-                                        {formatDistance(distance)}
-                                    </Text>
-                                </>
-                            )}
-                        </View>
-                    </View>
-
-                    <View style={styles.arrowContainer}>
-                        <Text style={styles.arrow}>→</Text>
+                            </>
+                        )}
                     </View>
                 </View>
 
-                {/* Hard Shadow (simulated with border/absolute if needed, but here simple border) */}
-            </Pressable>
-            {/* Separate View for Hard Shadow behind */}
-            <View style={styles.cardShadow} />
-        </View>
+                <View style={styles.arrowContainer}>
+                    <Text style={styles.arrow}>→</Text>
+                </View>
+            </View>
+        </Pressable>
     );
 };
 
 const styles = StyleSheet.create({
-    wrapper: {
-        marginHorizontal: SPACING.md,
-        marginBottom: SPACING.md,
-        position: 'relative',
-        height: 80, // Fixed height optimization
-    },
-    cardShadow: {
-        position: 'absolute',
-        top: 4,
-        left: 4,
-        right: 0,
-        bottom: 0,
-        backgroundColor: COLORS.borderHighlight,
-        zIndex: 0,
-        borderRadius: BORDER_RADIUS.sm,
-    },
     card: {
-        zIndex: 1,
-        flex: 1,
-        borderRadius: BORDER_RADIUS.sm,
+        marginHorizontal: SPACING.md,
+        marginBottom: SPACING.sm,
+        borderRadius: BORDER_RADIUS.lg,
         backgroundColor: COLORS.surfaceLight,
         borderWidth: 1,
         borderColor: COLORS.border,
-        flexDirection: 'row',
         overflow: 'hidden',
     },
-    accentStripe: {
-        width: 4,
-        height: '100%',
-    },
-    cardContent: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: SPACING.sm,
+    glowBorder: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 3,
+        borderTopLeftRadius: BORDER_RADIUS.lg,
+        borderBottomLeftRadius: BORDER_RADIUS.lg,
     },
     rankBadge: {
         position: 'absolute',
         top: 0,
         right: 0,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        backgroundColor: COLORS.surface,
-        borderBottomLeftRadius: BORDER_RADIUS.sm,
-        borderLeftWidth: 1,
-        borderBottomWidth: 1,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderBottomLeftRadius: BORDER_RADIUS.md,
+        borderWidth: 1,
     },
     rankText: {
-        fontSize: 10,
+        fontSize: FONT_SIZES.xs,
         fontWeight: FONT_WEIGHTS.bold,
-        color: COLORS.textSecondary
+    },
+    cardContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: SPACING.md,
+        paddingLeft: SPACING.lg,
     },
     iconContainer: {
-        width: 44,
-        height: 44,
+        width: 48,
+        height: 48,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: SPACING.md,
-        borderRadius: BORDER_RADIUS.sm,
-        backgroundColor: COLORS.surface,
+        borderRadius: BORDER_RADIUS.md,
     },
-    icon: { fontSize: 20 },
+    icon: { fontSize: 22 },
     content: { flex: 1 },
     header: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
     name: {
@@ -185,24 +163,23 @@ const styles = StyleSheet.create({
         marginRight: SPACING.sm,
         flex: 1,
     },
-    activityBadge: {
-        // minimalist, just text
-    },
+    activityBadge: {},
     activityText: {
-        fontSize: 10,
+        fontSize: FONT_SIZES.xs,
         fontWeight: FONT_WEIGHTS.bold,
-        letterSpacing: 0.5
+        letterSpacing: 0.5,
     },
     type: {
-        fontSize: 10,
+        fontSize: FONT_SIZES.xs,
         color: COLORS.textMuted,
         textTransform: 'uppercase',
-        marginBottom: 2
+        marginBottom: 4,
+        letterSpacing: 0.5,
     },
     stats: { flexDirection: 'row', alignItems: 'baseline' },
-    statValue: { fontSize: 12, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textSecondary },
-    statLabel: { fontSize: 12, color: COLORS.textMuted },
-    statDivider: { width: 1, height: 10, backgroundColor: COLORS.border, marginHorizontal: SPACING.sm },
+    statValue: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.textSecondary },
+    statLabel: { fontSize: FONT_SIZES.sm, color: COLORS.textMuted },
+    statDivider: { width: 1, height: 12, backgroundColor: COLORS.border, marginHorizontal: SPACING.sm },
     arrowContainer: { marginLeft: SPACING.sm },
     arrow: { fontSize: 18, color: COLORS.textMuted },
 });

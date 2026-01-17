@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '@shared/constants/theme';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@shared/constants/theme';
 
 const USER_DATA = {
     anonymousId: 'radar_7x9k2m',
@@ -29,22 +30,25 @@ const MENU_ITEMS = [
     { id: 'about', icon: '📱', label: 'About Radar', color: COLORS.primary },
 ];
 
-const StatCard: React.FC<{ value: string | number; label: string; color: string }> = ({ value, label, color }) => (
+const StatCard: React.FC<{ value: string | number; label: string; color: string; gradientEnd: string }> = ({ value, label, color, gradientEnd }) => (
     <View style={styles.statWrapper}>
-        <View style={[styles.statShadow, { backgroundColor: COLORS.borderHighlight }]} />
-        <View style={styles.statCard}>
-            <View style={[styles.statAccent, { backgroundColor: color }]} />
-            <View style={styles.statContent}>
-                <Text style={[styles.statValue, { color }]}>{value}</Text>
-                <Text style={styles.statLabel}>{label}</Text>
-            </View>
-        </View>
+        <LinearGradient
+            colors={[COLORS.surfaceLight, COLORS.surface]}
+            style={styles.statCard}
+        >
+            <View style={[styles.statGlow, { backgroundColor: color }]} />
+            <Text style={[styles.statValue, { color }]}>{value}</Text>
+            <Text style={styles.statLabel}>{label}</Text>
+        </LinearGradient>
     </View>
 );
 
 const MenuItem: React.FC<{ item: typeof MENU_ITEMS[0] }> = ({ item }) => (
-    <Pressable style={styles.menuItem}>
-        <View style={[styles.menuIcon, { borderColor: item.color, backgroundColor: COLORS.surfaceLight }]}>
+    <Pressable style={({ pressed }) => [
+        styles.menuItem,
+        pressed && { backgroundColor: COLORS.surfaceGlow }
+    ]}>
+        <View style={[styles.menuIcon, { backgroundColor: item.color + '20' }]}>
             <Text style={styles.menuIconText}>{item.icon}</Text>
         </View>
         <Text style={styles.menuLabel}>{item.label}</Text>
@@ -59,52 +63,60 @@ export const ProfileScreen: React.FC = () => {
         <View style={styles.container}>
             <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + SPACING.md, paddingBottom: insets.bottom + 120 }]}
+                contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + SPACING.lg, paddingBottom: insets.bottom + 120 }]}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Profile Header */}
                 <View style={styles.profileHeader}>
-                    <View style={styles.avatarWrapper}>
-                        <View style={styles.avatarShadow} />
-                        <View style={styles.avatar}>
-                            <View style={[styles.avatarBackground, { backgroundColor: COLORS.surfaceLight }]}>
+                    {/* Avatar with glow ring */}
+                    <View style={styles.avatarContainer}>
+                        <LinearGradient
+                            colors={[COLORS.primary, COLORS.accent, COLORS.secondary]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.avatarGlowRing}
+                        >
+                            <View style={styles.avatarInner}>
                                 <Text style={styles.avatarText}>👤</Text>
                             </View>
-                        </View>
-                        <View style={styles.trustRing}>
-                            <View style={styles.trustBadge}>
-                                <Text style={styles.trustScore}>{USER_DATA.trustScore}</Text>
-                            </View>
+                        </LinearGradient>
+                        {/* Trust Badge */}
+                        <View style={styles.trustBadge}>
+                            <Text style={styles.trustScore}>{USER_DATA.trustScore}</Text>
                         </View>
                     </View>
+
                     <Text style={styles.anonymousId}>@{USER_DATA.anonymousId}</Text>
+
+                    {/* Streak Badge */}
                     <View style={styles.streakBadge}>
                         <Text style={styles.streakIcon}>🔥</Text>
                         <Text style={styles.streakText}>{USER_DATA.streak} day streak</Text>
                     </View>
+
                     <Text style={styles.joinedText}>Member since {USER_DATA.joinedDate}</Text>
                 </View>
 
                 {/* Stats Grid */}
                 <View style={styles.statsGrid}>
-                    <StatCard value={USER_DATA.totalPosts} label="Posts" color={COLORS.primary} />
-                    <StatCard value={USER_DATA.totalUpvotes.toLocaleString()} label="Upvotes" color={COLORS.success} />
-                    <StatCard value={USER_DATA.bubblesVisited} label="Bubbles" color={COLORS.warning} />
-                    <StatCard value={`${USER_DATA.trustScore}%`} label="Trust" color={COLORS.secondary} />
+                    <StatCard value={USER_DATA.totalPosts} label="Posts" color={COLORS.primary} gradientEnd={COLORS.accent} />
+                    <StatCard value={USER_DATA.totalUpvotes.toLocaleString()} label="Upvotes" color={COLORS.success} gradientEnd={COLORS.primary} />
+                    <StatCard value={USER_DATA.bubblesVisited} label="Bubbles" color={COLORS.warning} gradientEnd={COLORS.error} />
+                    <StatCard value={`${USER_DATA.trustScore}%`} label="Trust" color={COLORS.secondary} gradientEnd={COLORS.accent} />
                 </View>
 
                 {/* Badges */}
                 <View style={styles.badgesSection}>
                     <Text style={styles.sectionTitle}>BADGES</Text>
                     <View style={styles.badgesContainer}>
-                        <View style={styles.badgesContent}>
-                            {USER_DATA.badges.map((badge) => (
-                                <View key={badge.id} style={styles.badge}>
-                                    <View style={styles.badgeIcon}><Text style={styles.badgeEmoji}>{badge.icon}</Text></View>
-                                    <Text style={styles.badgeName}>{badge.name}</Text>
+                        {USER_DATA.badges.map((badge) => (
+                            <View key={badge.id} style={styles.badge}>
+                                <View style={styles.badgeIcon}>
+                                    <Text style={styles.badgeEmoji}>{badge.icon}</Text>
                                 </View>
-                            ))}
-                        </View>
+                                <Text style={styles.badgeName}>{badge.name}</Text>
+                            </View>
+                        ))}
                     </View>
                 </View>
 
@@ -117,12 +129,20 @@ export const ProfileScreen: React.FC = () => {
                 </View>
 
                 {/* Logout */}
-                <View style={styles.logoutWrapper}>
-                    <View style={styles.logoutShadow} />
-                    <Pressable style={styles.logoutButton}>
+                <Pressable style={({ pressed }) => [
+                    styles.logoutButton,
+                    pressed && { transform: [{ scale: 0.98 }] }
+                ]}>
+                    <LinearGradient
+                        colors={[COLORS.error + '40', COLORS.error + '20']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.logoutGradient}
+                    >
                         <Text style={styles.logoutText}>RESET IDENTITY</Text>
-                    </Pressable>
-                </View>
+                    </LinearGradient>
+                </Pressable>
+
                 <Text style={styles.versionText}>Radar v1.0.0</Text>
             </ScrollView>
         </View>
@@ -132,49 +152,143 @@ export const ProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background },
     scrollView: { flex: 1 },
-    scrollContent: { paddingHorizontal: SPACING.md },
+    scrollContent: { paddingHorizontal: SPACING.lg },
+
+    // Profile Header
     profileHeader: { alignItems: 'center', marginBottom: SPACING.xl },
-    avatarWrapper: { position: 'relative', marginBottom: SPACING.md },
-    avatarShadow: { position: 'absolute', top: 6, left: 6, width: 96, height: 96, borderRadius: BORDER_RADIUS.md, backgroundColor: COLORS.borderHighlight },
-    avatar: { width: 96, height: 96, borderRadius: BORDER_RADIUS.md, overflow: 'hidden', borderWidth: 2, borderColor: COLORS.border },
-    avatarBackground: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.surfaceLight },
-    avatarText: { fontSize: 40 },
-    trustRing: { position: 'absolute', bottom: -8, right: -8 },
-    trustBadge: { backgroundColor: COLORS.surface, paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: BORDER_RADIUS.sm, borderWidth: 1, borderColor: COLORS.success }, // Square badge
-    trustScore: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.bold, color: COLORS.success },
-    anonymousId: { fontSize: FONT_SIZES.xl, fontWeight: FONT_WEIGHTS.black, color: COLORS.textPrimary, marginBottom: SPACING.sm, letterSpacing: 1 },
-    streakBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, paddingHorizontal: SPACING.md, paddingVertical: 6, borderRadius: BORDER_RADIUS.sm, borderWidth: 1, borderColor: COLORS.warning, marginBottom: SPACING.sm },
-    streakIcon: { fontSize: 14, marginRight: 4 },
-    streakText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.bold, color: COLORS.warning },
-    joinedText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
-    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: SPACING.xl, gap: SPACING.sm },
-    statWrapper: { width: '48%', position: 'relative' },
-    statShadow: { position: 'absolute', top: 4, left: 4, right: 0, bottom: 0, borderRadius: BORDER_RADIUS.sm, zIndex: 0 },
-    statCard: { borderRadius: BORDER_RADIUS.sm, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface, zIndex: 1 },
-    statAccent: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
-    statContent: { padding: SPACING.md, alignItems: 'center', paddingTop: SPACING.lg },
-    statValue: { fontSize: FONT_SIZES.xl, fontWeight: FONT_WEIGHTS.black },
-    statLabel: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2, textTransform: 'uppercase', letterSpacing: 1, fontWeight: FONT_WEIGHTS.bold },
+    avatarContainer: { position: 'relative', marginBottom: SPACING.md },
+    avatarGlowRing: {
+        width: 108,
+        height: 108,
+        borderRadius: BORDER_RADIUS.full,
+        padding: 4,
+        ...SHADOWS.glow,
+    },
+    avatarInner: {
+        flex: 1,
+        borderRadius: BORDER_RADIUS.full,
+        backgroundColor: COLORS.surfaceLight,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarText: { fontSize: 44 },
+    trustBadge: {
+        position: 'absolute',
+        bottom: -4,
+        right: -4,
+        backgroundColor: COLORS.success,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: BORDER_RADIUS.full,
+        ...SHADOWS.glowSuccess,
+    },
+    trustScore: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.black, color: COLORS.textInverse },
+    anonymousId: { fontSize: FONT_SIZES.xl, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary, letterSpacing: 1 },
+    streakBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.surfaceLight,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: 8,
+        borderRadius: BORDER_RADIUS.full,
+        marginTop: SPACING.sm,
+        borderWidth: 1,
+        borderColor: COLORS.warning + '40',
+    },
+    streakIcon: { fontSize: 16, marginRight: 6 },
+    streakText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.warning },
+    joinedText: { fontSize: FONT_SIZES.sm, color: COLORS.textMuted, marginTop: SPACING.sm },
+
+    // Stats Grid
+    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.xl },
+    statWrapper: { width: '48%' },
+    statCard: {
+        borderRadius: BORDER_RADIUS.lg,
+        padding: SPACING.md,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        overflow: 'hidden',
+    },
+    statGlow: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 2,
+    },
+    statValue: { fontSize: FONT_SIZES.xxl, fontWeight: FONT_WEIGHTS.black },
+    statLabel: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted, marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 },
+
+    // Badges
     badgesSection: { marginBottom: SPACING.xl },
-    sectionTitle: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.black, color: COLORS.textSecondary, letterSpacing: 1, marginBottom: SPACING.sm },
-    badgesContainer: { borderRadius: BORDER_RADIUS.sm, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface },
-    badgesContent: { flexDirection: 'row', flexWrap: 'wrap', padding: SPACING.md, gap: SPACING.md },
-    badge: { alignItems: 'center', width: '22%' },
-    badgeIcon: { width: 48, height: 48, borderRadius: BORDER_RADIUS.sm, backgroundColor: COLORS.surfaceLight, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.xs },
+    sectionTitle: { fontSize: FONT_SIZES.xs, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: SPACING.sm },
+    badgesContainer: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.surfaceLight,
+        borderRadius: BORDER_RADIUS.lg,
+        padding: SPACING.md,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    badge: { flex: 1, alignItems: 'center' },
+    badgeIcon: {
+        width: 52,
+        height: 52,
+        borderRadius: BORDER_RADIUS.md,
+        backgroundColor: COLORS.surface,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: SPACING.xs,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
     badgeEmoji: { fontSize: 24 },
-    badgeName: { fontSize: 10, color: COLORS.textSecondary, textAlign: 'center', fontWeight: 'bold' },
+    badgeName: { fontSize: 10, color: COLORS.textMuted, textAlign: 'center' },
+
+    // Menu
     menuSection: { marginBottom: SPACING.xl },
-    menuContainer: { borderRadius: BORDER_RADIUS.sm, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface },
-    menuItem: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-    menuIcon: { width: 36, height: 36, borderRadius: BORDER_RADIUS.sm, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md },
-    menuIconText: { fontSize: 16 },
-    menuLabel: { flex: 1, fontSize: FONT_SIZES.md, color: COLORS.textPrimary, fontWeight: FONT_WEIGHTS.bold },
-    menuArrow: { fontSize: 18, fontWeight: FONT_WEIGHTS.black },
-    logoutWrapper: { marginBottom: SPACING.lg, position: 'relative' },
-    logoutShadow: { position: 'absolute', top: 4, left: 4, right: 0, bottom: 0, borderRadius: BORDER_RADIUS.sm, backgroundColor: COLORS.error },
-    logoutButton: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.sm, borderWidth: 2, borderColor: COLORS.error, paddingVertical: SPACING.md, alignItems: 'center' },
-    logoutText: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.black, color: COLORS.error, letterSpacing: 1 },
-    versionText: { textAlign: 'center', fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginBottom: SPACING.md },
+    menuContainer: {
+        backgroundColor: COLORS.surfaceLight,
+        borderRadius: BORDER_RADIUS.lg,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: SPACING.md,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border,
+    },
+    menuIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: BORDER_RADIUS.md,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: SPACING.md,
+    },
+    menuIconText: { fontSize: 18 },
+    menuLabel: { flex: 1, fontSize: FONT_SIZES.md, color: COLORS.textPrimary },
+    menuArrow: { fontSize: 18, fontWeight: FONT_WEIGHTS.bold },
+
+    // Logout
+    logoutButton: {
+        marginBottom: SPACING.md,
+        borderRadius: BORDER_RADIUS.lg,
+        overflow: 'hidden',
+    },
+    logoutGradient: {
+        paddingVertical: SPACING.md,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.error + '40',
+        borderRadius: BORDER_RADIUS.lg,
+    },
+    logoutText: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.error, letterSpacing: 1 },
+    versionText: { textAlign: 'center', fontSize: FONT_SIZES.xs, color: COLORS.textMuted },
 });
 
 export default ProfileScreen;

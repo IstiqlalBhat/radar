@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     View,
     Pressable,
@@ -10,9 +10,10 @@ import {
     COLORS,
     BORDER_RADIUS,
     SPACING,
+    SHADOWS,
 } from '../constants/theme';
 
-type AccentColor = 'cyan' | 'pink' | 'yellow' | 'purple' | 'none';
+type AccentColor = 'cyan' | 'pink' | 'yellow' | 'purple' | 'success' | 'none';
 
 interface HybridCardProps {
     children: React.ReactNode;
@@ -21,7 +22,7 @@ interface HybridCardProps {
     accentColor?: AccentColor;
     accentPosition?: 'left' | 'top' | 'right' | 'bottom';
     disabled?: boolean;
-    showShadow?: boolean;
+    showGlow?: boolean;
 }
 
 export const HybridCard: React.FC<HybridCardProps> = ({
@@ -31,23 +32,29 @@ export const HybridCard: React.FC<HybridCardProps> = ({
     accentColor = 'cyan',
     accentPosition = 'left',
     disabled = false,
-    showShadow = true,
+    showGlow = false,
 }) => {
-    const [isPressed, setIsPressed] = useState(false);
-
     const getAccentColorValue = (): string => {
         switch (accentColor) {
-            case 'cyan':
-                return COLORS.primary;
-            case 'pink':
-                return COLORS.secondary;
-            case 'yellow':
-                return COLORS.warning;
-            case 'purple':
-                return COLORS.accent || COLORS.primary; // Fallback
-            default:
-                return 'transparent';
+            case 'cyan': return COLORS.primary;
+            case 'pink': return COLORS.secondary;
+            case 'yellow': return COLORS.warning;
+            case 'purple': return COLORS.accent;
+            case 'success': return COLORS.success;
+            default: return 'transparent';
         }
+    };
+
+    const getGlowStyle = () => {
+        if (!showGlow) return {};
+        const color = getAccentColorValue();
+        return {
+            shadowColor: color,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.3,
+            shadowRadius: 12,
+            elevation: 0,
+        };
     };
 
     const getAccentStyle = (): ViewStyle => {
@@ -57,17 +64,18 @@ export const HybridCard: React.FC<HybridCardProps> = ({
         const baseStyle: ViewStyle = {
             position: 'absolute',
             backgroundColor: color,
+            borderRadius: 2,
         };
 
         switch (accentPosition) {
             case 'left':
-                return { ...baseStyle, left: 0, top: 0, bottom: 0, width: 4 };
+                return { ...baseStyle, left: 0, top: SPACING.sm, bottom: SPACING.sm, width: 3 };
             case 'top':
-                return { ...baseStyle, left: 0, right: 0, top: 0, height: 4 };
+                return { ...baseStyle, left: SPACING.sm, right: SPACING.sm, top: 0, height: 3 };
             case 'right':
-                return { ...baseStyle, right: 0, top: 0, bottom: 0, width: 4 };
+                return { ...baseStyle, right: 0, top: SPACING.sm, bottom: SPACING.sm, width: 3 };
             case 'bottom':
-                return { ...baseStyle, left: 0, right: 0, bottom: 0, height: 4 };
+                return { ...baseStyle, left: SPACING.sm, right: SPACING.sm, bottom: 0, height: 3 };
             default:
                 return baseStyle;
         }
@@ -82,75 +90,36 @@ export const HybridCard: React.FC<HybridCardProps> = ({
 
     if (onPress) {
         return (
-            <View style={[styles.wrapper, style]}>
-                {showShadow && (
-                    <View
-                        style={[
-                            styles.shadow,
-                            {
-                                backgroundColor: COLORS.borderHighlight || '#000',
-                            },
-                        ]}
-                    />
-                )}
-                <Pressable
-                    onPress={onPress}
-                    disabled={disabled}
-                    onPressIn={() => setIsPressed(true)}
-                    onPressOut={() => setIsPressed(false)}
-                    style={[
-                        styles.container,
-                        isPressed && {
-                            transform: [
-                                { translateX: 2 },
-                                { translateY: 2 },
-                            ],
-                        },
-                    ]}
-                >
-                    {content}
-                </Pressable>
-            </View>
+            <Pressable
+                onPress={onPress}
+                disabled={disabled}
+                style={({ pressed }) => [
+                    styles.container,
+                    getGlowStyle(),
+                    pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 },
+                    disabled && { opacity: 0.5 },
+                    style,
+                ]}
+            >
+                {content}
+            </Pressable>
         );
     }
 
     return (
-        <View style={[styles.wrapper, style]}>
-            {showShadow && (
-                <View
-                    style={[
-                        styles.shadow,
-                        {
-                            backgroundColor: COLORS.borderHighlight || '#000',
-                        },
-                    ]}
-                />
-            )}
-            <View style={styles.container}>{content}</View>
+        <View style={[styles.container, getGlowStyle(), style]}>
+            {content}
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    wrapper: {
-        position: 'relative',
-    },
-    shadow: {
-        position: 'absolute',
-        top: 4,
-        left: 4,
-        right: 0,
-        bottom: 0,
-        borderRadius: BORDER_RADIUS.sm,
-        zIndex: 0,
-    },
     container: {
-        backgroundColor: COLORS.surface,
-        borderRadius: BORDER_RADIUS.sm,
+        backgroundColor: COLORS.surfaceLight,
+        borderRadius: BORDER_RADIUS.lg,
         borderWidth: 1,
         borderColor: COLORS.border,
         overflow: 'hidden',
-        zIndex: 1,
     },
     contentContainer: {
         flex: 1,

@@ -8,6 +8,8 @@ import {
     Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import {
     COLORS,
@@ -15,6 +17,7 @@ import {
     FONT_SIZES,
     FONT_WEIGHTS,
     BORDER_RADIUS,
+    SHADOWS,
 } from '@shared/constants/theme';
 
 // Mock posts data
@@ -65,22 +68,29 @@ const MOCK_POSTS = [
     },
 ];
 
+const getAccentColor = (index: number): string => {
+    const colors = [COLORS.primary, COLORS.secondary, COLORS.accent, COLORS.success];
+    return colors[index % colors.length];
+};
+
 const PostCard = ({ post, index }: { post: any; index: number }) => {
     const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
+    const accentColor = getAccentColor(index);
 
     return (
         <View style={styles.postWrapper}>
-            {/* Hard Shadow Background */}
-            <View style={styles.postShadow} />
-
-            <View style={styles.postCard}>
-                {/* Accent Stripe */}
-                <View style={[styles.accentStripe, { backgroundColor: index % 2 === 0 ? COLORS.primary : COLORS.secondary }]} />
+            <Pressable style={({ pressed }) => [
+                styles.postCard,
+                pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 }
+            ]}>
+                {/* Glowing accent border */}
+                <View style={[styles.glowBorder, { backgroundColor: accentColor }]} />
 
                 <View style={styles.postContent}>
                     {/* Header */}
                     <View style={styles.postHeader}>
-                        <View style={styles.bubbleBadge}>
+                        <View style={[styles.bubbleBadge, { borderColor: accentColor }]}>
+                            <View style={[styles.bubbleDot, { backgroundColor: accentColor }]} />
                             <Text style={styles.bubbleName}>{post.bubbleName}</Text>
                         </View>
                         <Text style={styles.timestamp}>{post.timestamp}</Text>
@@ -95,7 +105,8 @@ const PostCard = ({ post, index }: { post: any; index: number }) => {
                         <Pressable
                             style={[
                                 styles.voteButton,
-                                userVote === 'up' && { backgroundColor: COLORS.success + '20', borderColor: COLORS.success }, // 20% opacity hex
+                                userVote === 'up' && styles.voteButtonActive,
+                                userVote === 'up' && { borderColor: COLORS.success },
                             ]}
                             onPress={() => setUserVote(userVote === 'up' ? null : 'up')}
                         >
@@ -120,7 +131,8 @@ const PostCard = ({ post, index }: { post: any; index: number }) => {
                         <Pressable
                             style={[
                                 styles.voteButton,
-                                userVote === 'down' && { backgroundColor: COLORS.error + '20', borderColor: COLORS.error },
+                                userVote === 'down' && styles.voteButtonActive,
+                                userVote === 'down' && { borderColor: COLORS.error },
                             ]}
                             onPress={() => setUserVote(userVote === 'down' ? null : 'down')}
                         >
@@ -146,7 +158,7 @@ const PostCard = ({ post, index }: { post: any; index: number }) => {
                         </Pressable>
                     </View>
                 </View>
-            </View>
+            </Pressable>
         </View>
     );
 };
@@ -163,19 +175,28 @@ export const FeedScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            {/* Header */}
+            {/* Floating Header */}
             <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
-                <View style={styles.headerContent}>
-                    <View>
-                        <Text style={styles.headerTitle}>LIVE FEED</Text>
-                        <Text style={styles.headerSubtitle}>
-                            What's happening nearby
-                        </Text>
+                <BlurView intensity={60} tint="dark" style={styles.headerBlur}>
+                    <View style={styles.headerContent}>
+                        <View>
+                            <Text style={styles.headerTitle}>LIVE FEED</Text>
+                            <Text style={styles.headerSubtitle}>
+                                What's happening nearby
+                            </Text>
+                        </View>
+                        <Pressable style={styles.filterButton}>
+                            <LinearGradient
+                                colors={[COLORS.primary, COLORS.accent]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.filterGradient}
+                            >
+                                <Text style={styles.filterIcon}>⚡</Text>
+                            </LinearGradient>
+                        </Pressable>
                     </View>
-                    <Pressable style={styles.filterButton}>
-                        <Text style={styles.filterIcon}>⚡</Text>
-                    </Pressable>
-                </View>
+                </BlurView>
             </View>
 
             {/* Feed */}
@@ -183,7 +204,7 @@ export const FeedScreen: React.FC = () => {
                 style={styles.feed}
                 contentContainerStyle={[
                     styles.feedContent,
-                    { paddingBottom: insets.bottom + 100 },
+                    { paddingTop: insets.top + 80, paddingBottom: insets.bottom + 120 },
                 ]}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
@@ -192,6 +213,7 @@ export const FeedScreen: React.FC = () => {
                         onRefresh={onRefresh}
                         tintColor={COLORS.primary}
                         colors={[COLORS.primary]}
+                        progressViewOffset={insets.top + 80}
                     />
                 }
             >
@@ -202,9 +224,18 @@ export const FeedScreen: React.FC = () => {
 
             {/* FAB for new post */}
             <View style={[styles.fabContainer, { bottom: insets.bottom + 100 }]}>
-                <View style={styles.fabShadow} />
-                <Pressable style={styles.fab}>
-                    <Text style={styles.fabIcon}>+</Text>
+                <Pressable style={({ pressed }) => [
+                    styles.fab,
+                    pressed && { transform: [{ scale: 0.9 }] }
+                ]}>
+                    <LinearGradient
+                        colors={[COLORS.primary, COLORS.accent]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.fabGradient}
+                    >
+                        <Text style={styles.fabIcon}>+</Text>
+                    </LinearGradient>
                 </Pressable>
             </View>
         </View>
@@ -217,29 +248,30 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.background,
     },
     headerContainer: {
-        backgroundColor: COLORS.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
         zIndex: 100,
-        // Hard shadow
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 0,
-        elevation: 4,
+    },
+    headerBlur: {
+        overflow: 'hidden',
     },
     headerContent: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: SPACING.md,
+        paddingHorizontal: SPACING.lg,
         paddingVertical: SPACING.md,
+        backgroundColor: COLORS.glass,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border,
     },
     headerTitle: {
         fontSize: FONT_SIZES.xl,
         fontWeight: FONT_WEIGHTS.black,
         color: COLORS.textPrimary,
-        letterSpacing: 1,
+        letterSpacing: 2,
     },
     headerSubtitle: {
         fontSize: FONT_SIZES.sm,
@@ -247,17 +279,17 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     filterButton: {
-        width: 40,
-        height: 40,
-        borderRadius: BORDER_RADIUS.sm,
-        backgroundColor: COLORS.surfaceLight,
-        borderWidth: 1,
-        borderColor: COLORS.border,
+        borderRadius: BORDER_RADIUS.md,
+        overflow: 'hidden',
+    },
+    filterGradient: {
+        width: 44,
+        height: 44,
         justifyContent: 'center',
         alignItems: 'center',
     },
     filterIcon: {
-        fontSize: 18,
+        fontSize: 20,
     },
     feed: {
         flex: 1,
@@ -270,34 +302,26 @@ const styles = StyleSheet.create({
     postWrapper: {
         marginHorizontal: SPACING.md,
         marginBottom: SPACING.md,
-        position: 'relative',
-    },
-    postShadow: {
-        position: 'absolute',
-        top: 4,
-        left: 4,
-        right: 0,
-        bottom: 0,
-        borderRadius: BORDER_RADIUS.sm,
-        backgroundColor: COLORS.borderHighlight,
-        zIndex: 0,
     },
     postCard: {
-        borderRadius: BORDER_RADIUS.sm,
+        borderRadius: BORDER_RADIUS.lg,
         backgroundColor: COLORS.surfaceLight,
         borderWidth: 1,
         borderColor: COLORS.border,
         overflow: 'hidden',
-        zIndex: 1,
     },
-    accentStripe: {
+    glowBorder: {
         position: 'absolute',
         left: 0,
         top: 0,
-        width: 4,
+        bottom: 0,
+        width: 3,
+        borderTopLeftRadius: BORDER_RADIUS.lg,
+        borderBottomLeftRadius: BORDER_RADIUS.lg,
     },
     postContent: {
         padding: SPACING.md,
+        paddingLeft: SPACING.lg,
     },
     postHeader: {
         flexDirection: 'row',
@@ -306,21 +330,28 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.sm,
     },
     bubbleBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingHorizontal: SPACING.sm,
-        paddingVertical: 4,
-        borderRadius: BORDER_RADIUS.sm,
+        paddingVertical: 6,
+        borderRadius: BORDER_RADIUS.full,
         borderWidth: 1,
         backgroundColor: COLORS.surface,
-        borderColor: COLORS.border,
+    },
+    bubbleDot: {
+        width: 6,
+        height: 6,
+        borderRadius: BORDER_RADIUS.full,
+        marginRight: 6,
     },
     bubbleName: {
-        fontSize: 11,
-        fontWeight: FONT_WEIGHTS.bold,
+        fontSize: FONT_SIZES.xs,
+        fontWeight: FONT_WEIGHTS.semibold,
         color: COLORS.textSecondary,
     },
     timestamp: {
-        fontSize: 11,
-        color: COLORS.textSecondary,
+        fontSize: FONT_SIZES.xs,
+        color: COLORS.textMuted,
     },
     postText: {
         fontSize: FONT_SIZES.md,
@@ -335,18 +366,21 @@ const styles = StyleSheet.create({
     voteButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: SPACING.sm,
-        paddingVertical: 6,
-        borderRadius: BORDER_RADIUS.sm,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: 8,
+        borderRadius: BORDER_RADIUS.full,
         borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.surface,
         marginRight: SPACING.sm,
     },
+    voteButtonActive: {
+        backgroundColor: COLORS.surfaceGlow,
+    },
     voteIcon: {
         fontSize: 12,
-        color: COLORS.textSecondary,
-        marginRight: 4,
+        color: COLORS.textMuted,
+        marginRight: 6,
     },
     voteCount: {
         fontSize: FONT_SIZES.sm,
@@ -356,9 +390,9 @@ const styles = StyleSheet.create({
     commentButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: SPACING.sm,
-        paddingVertical: 6,
-        borderRadius: BORDER_RADIUS.sm,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: 8,
+        borderRadius: BORDER_RADIUS.full,
         backgroundColor: COLORS.surface,
         borderWidth: 1,
         borderColor: COLORS.border,
@@ -366,7 +400,7 @@ const styles = StyleSheet.create({
     },
     commentIcon: {
         fontSize: 14,
-        marginRight: 4,
+        marginRight: 6,
     },
     commentCount: {
         fontSize: FONT_SIZES.sm,
@@ -374,9 +408,9 @@ const styles = StyleSheet.create({
         fontWeight: FONT_WEIGHTS.semibold,
     },
     shareButton: {
-        width: 34,
-        height: 34,
-        borderRadius: BORDER_RADIUS.sm,
+        width: 38,
+        height: 38,
+        borderRadius: BORDER_RADIUS.full,
         backgroundColor: COLORS.surface,
         borderWidth: 1,
         borderColor: COLORS.border,
@@ -392,31 +426,23 @@ const styles = StyleSheet.create({
     // FAB Styles
     fabContainer: {
         position: 'absolute',
-        right: SPACING.md,
-    },
-    fabShadow: {
-        position: 'absolute',
-        top: 4,
-        left: 4,
-        width: 56,
-        height: 56,
-        borderRadius: BORDER_RADIUS.md, // Square-ish
-        backgroundColor: '#000',
+        right: SPACING.lg,
     },
     fab: {
-        width: 56,
-        height: 56,
-        borderRadius: BORDER_RADIUS.md, // Square-ish
-        backgroundColor: COLORS.primary,
+        borderRadius: BORDER_RADIUS.full,
+        overflow: 'hidden',
+        ...SHADOWS.glow,
+    },
+    fabGradient: {
+        width: 60,
+        height: 60,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: '#000',
     },
     fabIcon: {
         fontSize: 32,
-        color: '#000',
-        fontWeight: 'bold',
+        color: COLORS.textInverse,
+        fontWeight: FONT_WEIGHTS.bold,
     },
 });
 
