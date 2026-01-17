@@ -1,30 +1,49 @@
 {
   "expo": {
-    "name": "radar",
+    "name": "Radar",
     "slug": "radar",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0F0F0F"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.radar.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Radar needs your location to show you content from bubbles you're in.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Radar needs background location to notify you about activity in nearby bubbles.",
+        "NSLocationAlwaysUsageDescription": "Radar needs background location to notify you about activity in nearby bubbles."
+      }
     },
     "android": {
+      "package": "com.radar.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0F0F0F"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Radar to use your location to show nearby bubbles."
+        }
+      ]
+    ]
   }
 }
